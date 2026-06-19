@@ -5,6 +5,7 @@ export default function PostCard({
   text,
   image,
   avatar,
+  time,
   onDelete,
   darkMode,
 }) {
@@ -47,6 +48,7 @@ export default function PostCard({
       <p className="text-gray-400 text-sm">
         Frontend Developer
       </p>
+      <p className="text-xs text-gray-500">{time}</p>
     </div>
   </div>
   {user !== "Aakash" && (

@@ -3,40 +3,49 @@ import PostCard from "./PostCard";
 export default function Feed({ darkMode }) {
    const [posts, setPosts] = useState([
     {
-      id: 1,
-      user: "Aakash",
-      text: "Hello Social Feed 🚀",
-      image:null,
-      avatar: "https://i.pravatar.cc/150?img=1",
-    },
-    {
-      id: 2,
-      user: "Rahul",
-      text: "Learning React today!",
-      image:null,
-      avatar: "https://i.pravatar.cc/150?img=2",
-    },
-    {
-      id: 3,
-      user: "Priya",
-      text: "Building a social media app.",
-      image:null,
-      avatar: "https://i.pravatar.cc/150?img=3",
-    },
-    {
-        id: 4,
-        user: "Ananya",
-        text: "Just posted my first blog!",
-        image:null,
-       avatar: "https://i.pravatar.cc/150?img=4",
-      },
-    {
-        id: 5,
-        user: "Rohit",
-        text: "Exploring new features of this framework.",
-        image:null,
-        avatar: "https://i.pravatar.cc/150?img=5",
-    }
+  id: 1,
+  user: "Aakash",
+  text: "Hello Social Feed 🚀 #react #frontend",
+  image: null,
+  avatar: "https://i.pravatar.cc/150?img=1",
+  time: "2 hours ago",
+},
+
+{
+  id: 2,
+  user: "Rahul",
+  text: "Learning React today! #react #javascript",
+  image: null,
+  avatar: "https://i.pravatar.cc/150?img=2",
+  time: "3 hours ago",
+},
+
+{
+  id: 3,
+  user: "Priya",
+  text: "Building a social media app. #react #mongodb",
+  image: null,
+  avatar: "https://i.pravatar.cc/150?img=3",
+  time: "5 hours ago",
+},
+
+{
+  id: 4,
+  user: "Ananya",
+  text: "Just posted my first blog! #javascript",
+  image: null,
+  avatar: "https://i.pravatar.cc/150?img=4",
+  time: "1 day ago",
+},
+
+{
+  id: 5,
+  user: "Rohit",
+  text: "Exploring new features. #nodejs #mongodb",
+  image: null,
+  avatar: "https://i.pravatar.cc/150?img=5",
+  time: "2 days ago",
+},
   ]);
   const [newPost, setNewPost] = 
   useState("");
@@ -53,6 +62,7 @@ export default function Feed({ darkMode }) {
     avatar: `https://i.pravatar.cc/150?img=${Math.floor(
       Math.random() * 70
     )}`,
+    time: "Just now",
   };
       setPosts([post, ...posts]);
       setNewPost("");
@@ -118,6 +128,7 @@ export default function Feed({ darkMode }) {
         avatar={post.avatar}
         darkMode={darkMode}
         image={post.image}
+        time={post.time}
         onDelete={() => setPosts(posts.filter((p) => p.id !== post.id))}
         />
       ))}

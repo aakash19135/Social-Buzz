@@ -1,24 +1,21 @@
-const express = require("express");
+import express from "express";
+import {
+  createPost,
+  getPosts,
+  likePost,
+  addComment,
+  getPostComments,
+  repostPost,
+} from "../controllers/postController.js";
+
+import authMiddleware from "../middleware/authMiddleware.js";
+
 const router = express.Router();
-const postController = require("../controllers/postController");
 
-
-router.get("/", 
-    postController.getAllPosts);
-router.get("/new",
-    postController.newPost);
-   router.post("/",
-    postController.createPost
-   );
-   router.get("/:id/edit",
-    postController.editPost
-   );
-   router.get("/:id",
-    postController.getPostById);
-    router.put("/:id",
-        postController.updatePost);
-        router.delete("/:id",
-            postController.deletePost
-        );
-
-module.exports = router;
+router.post("/", authMiddleware, createPost);
+router.get("/", authMiddleware, getPosts);
+router.put("/like/:id", authMiddleware, likePost);
+router.post("/comments/:id", authMiddleware, addComment);
+router.post("/repost/:id", authMiddleware, repostPost);
+router.get("/comments/:id", authMiddleware, getPostComments);
+export default router;

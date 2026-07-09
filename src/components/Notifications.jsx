@@ -28,10 +28,13 @@ export default function Notifications({
                 : "bg-gray-100"
             }`}
           >
-            <p>{item.message}</p>
+            <p>{item.sender?.name}{item.type}d
+              your post
+            </p>
 
             <p className="text-xs text-gray-500 mt-1">
-              {item.time}
+              {new
+              Date(item.createdAt).toLocaleString()}
             </p>
           </div>
         ))

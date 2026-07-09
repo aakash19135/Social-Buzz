@@ -126,7 +126,23 @@ useEffect(() => {
 useEffect(() => {
   socket.on("connect", () => {
     console.log("Connected:", socket.id);
+    console.log("Registering:", profile);
+    const profile = JSON.parse(localStorage.getItem("profile"));
+    if (profile?.id) {
+      socket.emit("registerUser", profile._id);
+    }
   });
+
+  socket.on("newNotification", (notification) => {
+  const currentUser = JSON.parse(localStorage.getItem("profile"));
+
+  if (
+    notification.receiver &&
+    notification.receiver.toString() === currentUser._id
+  ) {
+    setNotifications((prev) => [notification, ...prev]);
+  }
+});
 
   socket.on("disconnect", () => {
     console.log("Disconnected");
@@ -134,24 +150,55 @@ useEffect(() => {
 
   return () => {
     socket.off("connect");
+    socket.off("newNotification");
     socket.off("disconnect");
   };
 }, []);
+useEffect(() => {
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://localhost:5000/api/notifications", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      console.log(data);
+      setNotifications(data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  fetchNotifications();
+}, []);
 const handleLogin = (userData) => {
-  setProfile((prev) => ({
-    ...prev,
+  console.log("USER FROM LOGIN", userData);
+  const updatedProfile = {
+    ...profile,
+    _id: userData._id,
     name: userData.name,
-  }));
+    username: userData.username,
+    email: userData.email,
+    profilePic: userData.profilePic,
+  };
+  console.log("UPDATED PROFILE:", updatedProfile);
+  console.log("Logged in user:",
+    userData);
+  socket.emit("registerUser", userData._id);
+  setProfile(updatedProfile);
+
   localStorage.setItem(
     "profile",
-    JSON.stringify({
-      ...profile,
-      name:userData.name,
-    })
+    JSON.stringify(updatedProfile)
   );
+
   setIsLoggedIn(true);
-  localStorage.setItem("isLoggedIn","true");
-  // socket.connect();
+  localStorage.setItem("isLoggedIn", "true");
+  socket.emit("registerUser", userData._id);
 };
   return (
           <Routes>

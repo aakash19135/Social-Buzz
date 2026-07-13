@@ -1,27 +1,30 @@
 import { NavLink } from "react-router-dom";
 
 export default function Sidebar({ 
-  darkMode, profile, onLogout }) {
+  darkMode, toggleDarkMode, profile, onLogout }) {
   return (
     <div
       className={`rounded-2xl p-5 shadow-lg hover:shadow-2xl transition-all duration-300 ${
         darkMode
-          ? "bg-slate-800 text-white"
+          ? "bg-slate-900 text-white border border-slate-700"
           : "bg-white text-black"
       }`}
     >
       <div
         className={`text-center rounded-2xl p-5 border ${
           darkMode
-            ? "bg-slate-700 border-slate-600"
+            ? "bg-slate-800 border-slate-700"
             : "bg-gray-50 border-gray-200"
         }`}
       >
         <img
-          src={profile.avatar}
-          alt="profile"
-          className="w-24 h-24 rounded-full mx-auto border-4 border-blue-500 shadow-lg hover:scale-105 transition"
-        />
+  src={
+    profile.profilePic ||
+    "https://ui-avatars.com/api/?name=" + encodeURIComponent(profile.name)
+  }
+  alt="profile"
+  className="w-24 h-24 rounded-full mx-auto border-4 border-blue-500 shadow-lg object-cover"
+/>
         <div className="flex justify-center items-center mt-2">
           <span className="w-3 h-3 rounded-full bg-green-500"></span>
           <span className="ml-2 text-sm text-green-500">
@@ -149,6 +152,17 @@ export default function Sidebar({
 >
   📊 Dashboard
 </NavLink>
+
+<button
+  onClick={toggleDarkMode}
+  className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
+    darkMode
+      ? "bg-yellow-400 hover:bg-yellow-500 text-black"
+      : "bg-slate-800 hover:bg-slate-900 text-white"
+  }`}
+>
+  {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+</button>
 
   <button
     onClick={onLogout}

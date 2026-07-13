@@ -17,8 +17,12 @@ export default function Profile({
     >
       <div className="flex flex-col items-center">
 
-        <img
-          src={profile.avatar}
+       <img
+  src={
+    profile.profilePic ||
+    profile.avatar ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}`
+  }
           alt="profile"
           className="w-36 h-36 rounded-full object-cover border-4 border-blue-500"
         />
@@ -32,12 +36,22 @@ export default function Profile({
     onChange={(e) => {
       const file = e.target.files[0];
 
-      if (file) {
-        setProfile((prev) => ({
-          ...prev,
-          avatar: URL.createObjectURL(file),
-        }));
-      }
+     if (file) {
+  const imageUrl = URL.createObjectURL(file);
+
+  const updatedProfile = {
+    ...profile,
+    avatar: imageUrl,
+    profilePic: imageUrl,
+  };
+
+  setProfile(updatedProfile);
+
+  localStorage.setItem(
+    "profile",
+    JSON.stringify(updatedProfile)
+  );
+}
     }}
     />
       
@@ -47,11 +61,11 @@ export default function Profile({
           <input
             type="text"
             placeholder="Image URL"
-            value={profile.avatar}
+            value={profile.profilePic||profile.avatar}
             onChange={(e) =>
               setProfile({
                 ...profile,
-                avatar: e.target.value,
+               profilePic : e.target.value,
               })
             }
             className={`mt-4 w-full p-3 rounded-xl border ${
@@ -133,7 +147,14 @@ export default function Profile({
         </div>
 
         <button
-          onClick={() => setEditing(!editing)}
+  onClick={() => {
+    localStorage.setItem(
+      "profile",
+      JSON.stringify(profile)
+    );
+
+    setEditing(!editing);
+  }}
           className="mt-8 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition"
         >
           {editing ? "Save Profile" : "Edit Profile"}

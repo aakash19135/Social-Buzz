@@ -6,7 +6,7 @@ import { getIO, getReceiverSocketId } from "../socket/socket.js";
 
 export const createPost = async (req, res) => {
   try {
-    const { text, image } = req.body;
+    const { text } = req.body;
 
     if (!text) {
       return res.status(400).json({
@@ -16,21 +16,26 @@ export const createPost = async (req, res) => {
 
     const hashtags = text.match(/#\w+/g) || [];
 
+    const image = req.file ? req.file.path : "";
+    console.log(req.file);
+
     const post = await Post.create({
       user: req.user._id,
       text,
-      image: image || "",
+      image,
       hashtags,
     });
 
-    res.status(201).json(post);
+    const populatedPost = await Post.findById(post._id)
+      .populate("user", "name username profilePic");
+
+    res.status(201).json(populatedPost);
   } catch (error) {
     res.status(500).json({
       message: error.message,
     });
   }
 };
-
 export const getPosts = async (req, res) => {
   try {
     const posts = await Post.find()

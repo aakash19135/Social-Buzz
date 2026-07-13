@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 export default function PostCard({
+  id,
   user,
   text,
   image,
@@ -8,8 +9,14 @@ export default function PostCard({
   time,
   onDelete,
   darkMode,
+  likesData,
+  profile,
+  isMyPost,
+  currentUserId,
   onBookmark,
   addNotification,
+  isFollowing,
+  toggleFollow,
   onRepost,
   onEdit,
   edited,
@@ -20,8 +27,13 @@ export default function PostCard({
   totalBookmarks,
   setTotalBookmarks,
 }) {
-  const [liked, setLiked] = useState(false);
-  const [likes, setLikes] = useState(0);
+  const [liked, setLiked] = useState(
+  likesData?.includes(profile?._id) || false
+);
+
+const [likes, setLikes] = useState(
+  likesData?.length || 0
+);
   const [isEditing, setIsEditing] = useState(false);
 const [editedText, setEditedText] = useState(text);
   const [saved, setSaved] = useState(false);
@@ -29,7 +41,6 @@ const [editedText, setEditedText] = useState(text);
   const[quoted , setQuoted] = useState(false);
   const [quoteText, setQuoteText] = useState("");
   const [showEmoji , setShowEmoji] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
   const[showImage, setShowImage] = useState(false);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
@@ -42,7 +53,7 @@ const [editedText, setEditedText] = useState(text);
 
   if (addNotification) {
     addNotification({
-      message: `💬 You commented on ${user}'s post`,
+      message: `💬 You commented on $${typeof user === "object" ? user.name : user}'s post`,
       time: "Just now",
     });
   }
@@ -68,7 +79,7 @@ const emojis = [
     <div
       className={`rounded-2xl p-5 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 mt-5 ${
         darkMode
-          ? "bg-slate-800 text-white border border-slate-700"
+          ? "bg-slate-900 text-white border border-slate-700"
           : "bg-white text-black"
       }`}
     >
@@ -76,13 +87,17 @@ const emojis = [
 
         <div className="flex gap-3 items-center">
           <img
-            src={avatar}
+            src={avatar ||
+              "https://i.pravatar.cc/150?img=12"}
             alt="avatar"
             className="w-14 h-14 rounded-full object-cover"
           />
 
           <div>
-            <h3 className="font-bold text-lg">{user}</h3>
+            <h3 className="font-bold text-lg">
+              {typeof user === "object" ?
+              user.name : user}
+            </h3>
 
             <p className="text-sm text-gray-500">
               Frontend Developer
@@ -94,28 +109,30 @@ const emojis = [
           </div>
         </div>
 
-        {user !== "Aakash" && (
-          <button
-            onClick={() => {
-  setIsFollowing(!isFollowing);
+      {!isMyPost && (
+  <button
+    onClick={() => {
+  const username =
+    typeof user === "object" ? user.name : user;
 
-  addNotification &&
-    addNotification({
-      message: !isFollowing
-        ? `➕ You followed ${user}`
-        : `➖ You unfollowed ${user}`,
-      time: "Just now",
-    });
+  toggleFollow(username);
+
+  addNotification?.({
+    message: isFollowing
+      ? `➖ You unfollowed ${username}`
+      : `➕ You followed ${username}`,
+    time: "Just now",
+  });
 }}
-            className={`px-4 py-1 rounded-lg text-white text-sm transition ${
-              isFollowing
-                ? "bg-red-500 hover:bg-red-600"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {isFollowing ? "Unfollow" : "Follow"}
-          </button>
-        )}
+    className={`px-4 py-1 rounded-lg text-white text-sm transition ${
+      isFollowing
+        ? "bg-red-500 hover:bg-red-600"
+        : "bg-blue-600 hover:bg-blue-700"
+    }`}
+  >
+    {isFollowing ? "Unfollow" : "Follow"}
+  </button>
+)}
 
       </div>
 
@@ -185,21 +202,36 @@ const emojis = [
       <div className="flex gap-6 mt-5 text-sm font-medium">
 
         <button
-          onClick={() => {
-  setLiked(!liked);
+         onClick={async () => {
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/posts/like/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
 
-  if (!liked) {
-    setTotalLikes((prev)=> prev + 1);
-    setLikes(likes + 1);
+    const updatedPost = await res.json();
 
-    addNotification &&
-      addNotification({
-        message: `❤️ You liked ${user}'s post`,
-        time: "Just now",
-      });
-  } else {
-    setTotalLikes((prev)=> prev - 1);
-    setLikes(likes - 1);
+    const likedByMe = 
+    updatedPost.likes.some(
+      (id) => id.toString() ===
+      profile._id
+    );
+
+    setLiked(likedByMe);
+    setLikes(updatedPost.likes.length);
+
+    if (likedByMe) {
+      setTotalLikes((prev) => prev + 1);
+    } else {
+      setTotalLikes((prev) => prev - 1);
+    }
+  } catch (err) {
+    console.log(err);
   }
 }}
           className="hover:text-blue-500 transition"
@@ -244,7 +276,7 @@ const emojis = [
 >
   {shared ? "✅ Shared" : "📤 Share"}
 </button>
-{user === "Aakash" && !isEditing && (
+{isMyPost && !isEditing && (
   <button
     onClick={() => setIsEditing(true)}
     className="hover:text-yellow-500 transition"
@@ -283,12 +315,14 @@ const emojis = [
   </>
 )}
 
-        <button
-          onClick={onDelete}
-          className="ml-auto text-red-500 hover:text-red-700 transition"
-        >
-          🗑 Delete
-        </button>
+       {isMyPost && (
+<button
+onClick={onDelete}
+className="ml-auto text-red-500 hover:text-red-700 transition"
+>
+🗑 Delete
+</button>
+)}
 
       </div>
         {quoted && (
@@ -308,10 +342,11 @@ const emojis = [
       onClick={() => {
         if (onRepost) {
           onRepost({
-            user: "Aakash",
+            user: profile.name,
             text: `${quoteText}\n\n🔁 ${text}`,
             image,
-            avatar,
+            profilePic: profile.profilePic,
+            avatar: profile.profilePic,
             time: "Just now",
             reposted: true,
           });
@@ -322,7 +357,7 @@ const emojis = [
 
         if (addNotification) {
           addNotification({
-            message: `💬 You quoted ${user}'s post`,
+            message: `💬 You quoted ${typeof user === "object" ? user.name : user}'s post`,
             time: "Just now",
           });
         }
@@ -386,10 +421,11 @@ const emojis = [
   onClick={() => {
     if (onRepost) {
       onRepost({
-        user: "Aakash",
+        user: profile.name,
         text,
         image,
-        avatar,
+        profilePic: profile.profilePic,
+        avatar: profile.profilePic,
         time: "Just now",
         reposted: true,
       });
@@ -397,7 +433,7 @@ const emojis = [
 
     if (addNotification) {
       addNotification({
-        message: `🔁 You reposted ${user}'s post`,
+        message: `🔁 You reposted ${typeof user === "object" ? user.name : user}'s post`,
         time: "Just now",
       });
     }

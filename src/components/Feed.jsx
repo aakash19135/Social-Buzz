@@ -17,7 +17,9 @@ export default function Feed({
   const [newPost, setNewPost] = useState("");
   const [search, setSearch] = useState("");
   const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const[uploading, setUploading] = useState(false);
+  const [followingUsers, setFollowingUsers] = useState([]);
   const [visiblePosts, setVisiblePosts] = useState(3);
   const [loading, setLoading] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -37,28 +39,46 @@ export default function Feed({
   "🚀",
 ];
 
-  const handlePost = () => {
-    if 
-    (newPost.trim() === ""||
-  newPost.length > MAX_CHARACTERS
+  const handlePost = async () => {
+  if (
+    newPost.trim() === "" ||
+    newPost.length > MAX_CHARACTERS
   ) {
     return;
   }
-    const post = {
-      id: Date.now(),
-      user:profile.name,
-      text: newPost,
-      image,
-      avatar: profile.avatar,
-      time: "Just now",
-      edited: false,
-    };
 
-    setPosts([post, ...posts]);
-    socket.emit("new-post", post);
+  try {
+    setUploading(true);
+
+    const formData = new FormData();
+
+    formData.append("text", newPost);
+
+    if (image) {
+      formData.append("image", image);
+    }
+
+    const res = await fetch("http://localhost:5000/api/posts", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    setPosts((prev) => [data, ...prev]);
+
     setNewPost("");
     setImage(null);
-  };
+    setImagePreview(null);
+  } catch (err) {
+    console.log(err);
+  } finally {
+    setUploading(false);
+  }
+};
 
   useEffect(() => {
     const handleScroll = () => {
@@ -82,6 +102,49 @@ export default function Feed({
     return () =>
       window.removeEventListener("scroll", handleScroll);
   }, [loading, visiblePosts, posts]);
+
+useEffect(() => {
+  const fetchPosts = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/posts", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      const data = await res.json();
+      const updatedPosts = data.map((post) => {
+  if (
+    post.user &&
+    (
+      post.user._id === profile._id ||
+      (typeof post.user === "object"
+        ? post.user.name
+        : post.user) === profile.name
+    )
+  ) {
+    return {
+      ...post,
+      user: {
+        ...post.user,
+        name: profile.name,
+        profilePic: profile.profilePic || profile.avatar,
+      },
+    };
+  }
+
+  return post;
+});
+
+setPosts(updatedPosts);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  fetchPosts();
+}, []);
+
   useEffect(() => {
   socket.on("receive-post", (post) => {
     setPosts((prev) => [post, ...prev]);
@@ -93,7 +156,13 @@ export default function Feed({
 }, []);
 
   return (
-    <div className="p-4">
+   <div
+  className={`p-4 rounded-2xl ${
+    darkMode
+      ? "bg-slate-900 text-white"
+      : "bg-white"
+  }`}
+>
 
       <input
         type="text"
@@ -176,15 +245,13 @@ export default function Feed({
             hidden
             accept="image/*"
             onChange={(e) => {
-              const file = e.target.files[0];
-              if (!file) return;
-              setUploading(true);
-              
-              setTimeout(() => {
-                setImage(URL.createObjectURL(file));
-                setUploading(false);
-              },1500);
-            }}
+  const file = e.target.files[0];
+
+  if (!file) return;
+
+  setImage(file);
+  setImagePreview(URL.createObjectURL(file));
+}}
           />
         </label>
 
@@ -203,15 +270,16 @@ export default function Feed({
     </div>
 
     <p className="text-sm mt-2 text-blue-500">
-      Uploading image...
+     {image ? "Uploading image..." :
+     "Publishing post..."}
     </p>
   </div>
 )}
 
-{image && (
+{imagePreview && (
   <div className="mt-4">
     <img
-      src={image}
+      src={imagePreview}
       alt="Preview"
       className="w-full h-64 object-cover rounded-xl mt-3"
     />
@@ -226,14 +294,41 @@ export default function Feed({
           .slice(0, visiblePosts)
           .map((post) => (
             <PostCard
-              key={post.id}
-              id={post.id}
-              user={post.user}
+              key={post._id||post.id}
+              id={post._id||post.id}
+              user={
+  post.user?._id === profile._id
+    ? {
+        ...post.user,
+        name: profile.name,
+        profilePic: profile.avatar || profile.profilePic,
+      }
+    : post.user
+}
               text={post.text}
-              avatar={post.avatar}
+              avatar={
+  post.user?._id === profile._id
+    ? profile.profilePic || profile.avatar
+    : post.user?.profilePic ||
+      post.profilePic ||
+      post.avatar ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        typeof post.user === "object"
+          ? post.user.name
+          : post.user
+      )}`
+}
+isMyPost={
+  (post.user?._id || post.user) === (profile._id || profile.name)
+}
               image={post.image}
-              time={post.time}
+              profile={profile}
+              currentUserId={profile.id_}
+              time={post.time || new Date(post.createdAt).toLocaleString()
+
+              }
               darkMode={darkMode}
+              likesData={post.likes}
               onBookmark={() => onBookmark(post)}
               totalLikes={totalLikes}
                setTotalLikes={setTotalLikes}
@@ -241,6 +336,17 @@ export default function Feed({
                 setTotalComments={setTotalComments}
                 totalBookmarks={totalBookmarks}
                setTotalBookmarks={setTotalBookmarks}
+               isFollowing={followingUsers.includes(
+  typeof post.user === "object" ? post.user.name : post.user
+)}
+
+toggleFollow={(username) => {
+  setFollowingUsers((prev) =>
+    prev.includes(username)
+      ? prev.filter((u) => u !== username)
+      : [...prev, username]
+  );
+}}
               addNotification={(notification) => addNotification(notification)}
               onRepost={(newPost) => setPosts([newPost, ...posts])}
               onEdit={(updatedText) => {
@@ -257,8 +363,13 @@ export default function Feed({
                         );
                         }}
                       edited={post.edited}
-              onDelete={() =>
-                setPosts(posts.filter((p) => p.id !== post.id))
+              onDelete={() => {
+  const deleteId = post._id || post.id;
+
+  setPosts((prev) =>
+    prev.filter((p) => (p._id || p.id) !== deleteId)
+  );
+}
               }
             />
           ))}

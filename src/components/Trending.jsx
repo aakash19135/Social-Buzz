@@ -9,13 +9,13 @@ export default function Trending({ darkMode, posts = []}) {
   ];
 
   return (
-    <div
-      className={`rounded-2xl p-5 shadow-xl ${
-        darkMode
-          ? "bg-slate-800 text-white"
-          : "bg-white text-black"
-      }`}
-    >
+   <div
+  className={`rounded-2xl shadow-lg p-5 ${
+    darkMode
+      ? "bg-slate-900 text-white"
+      : "bg-white"
+  }`}
+>
       <h2 className="text-xl font-bold mb-5">
         🔥 Trending
       </h2>

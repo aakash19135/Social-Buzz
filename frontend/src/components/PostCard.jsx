@@ -205,7 +205,7 @@ const emojis = [
          onClick={async () => {
   try {
     const res = await fetch(
-      `http://localhost:5000/api/posts/like/${id}`,
+      `https://social-buzz-upmo.onrender.com/api/posts/like/${id}`,
       {
         method: "PUT",
         headers: {

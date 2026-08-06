@@ -13,8 +13,8 @@ export default function Auth({ darkMode, onLogin }) {
 
   try {
     const url = isLogin
-      ? "http://localhost:5000/api/auth/login"
-      : "http://localhost:5000/api/auth/register";
+      ? "https://social-buzz-upmo.onrender.com/api/auth/login"
+      : "https://social-buzz-upmo.onrender.com/api/auth/register";
 
     const body = isLogin
       ? { email, password }

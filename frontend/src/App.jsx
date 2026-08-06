@@ -82,7 +82,7 @@ useEffect(() => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch("https://social-buzz-upmo.onrender.com/", {
+      const res = await fetch("https://social-buzz-upmo.onrender.com/api/notifications", {
         headers: {
           Authorization: `Bearer ${token}`,
         },

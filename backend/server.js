@@ -19,14 +19,14 @@ const server = createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "https://social-buzz-eta.vercel.app",
-    methods: ["GET", "POST", "PUT"],
-  },
+    origin: ["http://localhost:5173", "https://social-buzz-eta.vercel.app"],
+    methods: ["GET", "POST"]
+  }
 });
 initSocket(io);
 
 app.use(cors({
-  origin:"https://social-buzz-eta.vercel.app",
+  origin:["http://localhost:5173", "https://social-buzz-eta.vercel.app"],
   credentials:true,
 }))
 
